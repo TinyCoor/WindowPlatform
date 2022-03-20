@@ -5,8 +5,16 @@
 #ifndef WINDOW_H_
 #define WINDOW_H_
 #include "Windows.h"
+#include "utility.h"
 namespace Win32Platform {
-struct WindowData{
+
+struct RenderTarget {
+	int width, height;
+	u32* pixels;
+	/// Platform Specific
+	BITMAPINFO bitmapInfo;
+};
+struct WindowData {
 	const char * title = "Default";
 	int x = 200, y = 200;
 	int	width = 1280, height = 720;
@@ -18,11 +26,14 @@ public:
 	Window();
 	Window(const WindowData& data);
 
+	void Run();
+
 private:
-	bool initialized ;
+	bool running;
 	HWND windowHandle;
+	HDC hdc;
 	WindowData data;
 };
 }
 
-#endif //WINDOWPLATFORM_SRC_WINDOW_H_
+#endif // WINDOW_H_
