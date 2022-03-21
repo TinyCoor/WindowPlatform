@@ -4,11 +4,13 @@
 
 #include "Window.h"
 #include "utility.h"
-#include "SoftRenderer.h"
-
+#include "Input.h"
 using namespace Win32Platform;
 
 global_variable RenderTarget renderTarget;
+global_variable Mouse mouse ={0,0};
+global_variable vec2f player;
+
 
 static LRESULT CALLBACK WndProc(HWND window, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -43,13 +45,13 @@ static LRESULT CALLBACK WndProc(HWND window, UINT msg, WPARAM wParam, LPARAM lPa
 	return DefWindowProcA(window, msg, wParam, lParam);
 }
 
-Win32Platform::Window::Window()
+Window::Window()
 	: Window(WindowData())
 {
 
 }
 
-Win32Platform::Window::Window(const Win32Platform::WindowData &data)
+Window::Window(const Win32Platform::WindowData &data)
 	: data(data), running(true)
 {
 	WNDCLASSEXA windowClass 	= {0};
@@ -86,22 +88,50 @@ Win32Platform::Window::Window(const Win32Platform::WindowData &data)
 }
 
 
-void Win32Platform::Window::Run() {
+void Window::Run() {
 	/// TODO MOVE APPLICATION
 	while (running) {
+		for (int i = 0; i < MouseButtonType::MAX; ++i) {
+			mouse.buttons[i].changed = false;
+		}
 		MSG msg;
 		while (PeekMessageA(&msg, windowHandle, 0, 0, PM_REMOVE)) {
 			////
 			switch (msg.message) {
+				/// 按键 事件
 				case WM_SYSKEYUP:
 				case WM_SYSKEYDOWN:
 				case WM_KEYDOWN:
-				case WM_KEYUP:{
+				case WM_KEYUP: {
 					u32 vk_code = (u32) msg.wParam;
 					b32 wasDown = ((msg.lParam & (1 << 30)) != 0);
 					b32 isDown = ((msg.lParam & (1 << 31)) == 0);
-					if (vk_code==VK_ESCAPE){
-						return ;
+					switch (vk_code) {
+						case VK_LEFT:{ // <-
+							mouse.buttons[MouseButtonType::BUTTON_LEFT].changed =
+								isDown != mouse.buttons[BUTTON_LEFT].isDown;
+							mouse.buttons[MouseButtonType::BUTTON_LEFT].isDown = isDown;
+
+						}break;
+						case VK_RIGHT:{ // ->
+							mouse.buttons[MouseButtonType::BUTTON_RIGHT].changed =
+								isDown != mouse.buttons[BUTTON_RIGHT].isDown;
+							mouse.buttons[MouseButtonType::BUTTON_RIGHT].isDown = isDown;
+						} break;
+						case VK_UP:{ // up
+							mouse.buttons[MouseButtonType::BUTTON_UP].changed =
+								isDown != mouse.buttons[BUTTON_UP].isDown;
+							mouse.buttons[MouseButtonType::BUTTON_UP].isDown = isDown;
+						}break;
+						case VK_DOWN:{ // down
+							mouse.buttons[MouseButtonType::BUTTON_DOWN].changed =
+								isDown != mouse.buttons[BUTTON_DOWN].isDown;
+							mouse.buttons[MouseButtonType::BUTTON_DOWN].isDown = isDown;
+						}break;
+
+						default:{
+
+						}
 					}
 				}break;
 				default:{
@@ -110,9 +140,10 @@ void Win32Platform::Window::Run() {
 				}
 			}
 		}
+		/// simulate
+		mouse.process(player, renderTarget);
+		SoftRenderer::DrawRect(player, vec2f{10,10}, renderTarget, 0x0000ff);
 
-		SoftRenderer::ClearScreen(renderTarget, 0xFF0000);
-		SoftRenderer::DrawRect(50,50, 150,200, renderTarget, 0x0000FF);
 		/// Move to SoftwareRender
 		StretchDIBits(hdc,0, 0, renderTarget.width, renderTarget.height, 0, 0, data.width, data.height,
 	  		renderTarget.pixels, &renderTarget.bitmapInfo, DIB_RGB_COLORS, SRCCOPY);

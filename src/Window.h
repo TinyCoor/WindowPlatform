@@ -6,14 +6,11 @@
 #define WINDOW_H_
 #include "Windows.h"
 #include "utility.h"
+class Button;
+class Mouse;
+
 namespace Win32Platform {
 
-struct RenderTarget {
-	int width, height;
-	u32* pixels;
-	/// Platform Specific
-	BITMAPINFO bitmapInfo;
-};
 struct WindowData {
 	const char * title = "Default";
 	int x = 200, y = 200;
@@ -21,13 +18,17 @@ struct WindowData {
 	bool showWindow = true;
 };
 
+typedef bool WindowProcessButton(const Button& button);
+typedef bool WindowProcessMouse(const Mouse& mouse);
+
 class Window {
 public:
 	Window();
 	Window(const WindowData& data);
 
 	void Run();
-
+	WindowProcessMouse mouse_process;
+	WindowProcessButton button_process;
 private:
 	bool running;
 	HWND windowHandle;
